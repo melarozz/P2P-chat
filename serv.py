@@ -1,29 +1,52 @@
 import socket
 import threading
 
-def receive_messages(sock):
+
+def handle_client(client_socket, client_address):
+    print(f"Подключился клиент: {client_address}")
     while True:
-        message = sock.recv(1024).decode("utf-8")
-        print(message)
+        try:
+            message = client_socket.recv(1024).decode("utf-8")
+            if message:
+                print(f"Сообщение от клиента {client_address}: {message}")
+                broadcast(message)
+            else:
+                print(f"Клиент {client_address} отключился")
+                remove_client(client_socket)
+                break
+        except:
+            print(f"Ошибка при обработке сообщения от клиента {client_address}")
+            remove_client(client_socket)
+            break
 
-def send_message(sock):
+
+def broadcast(message):
+    for client_socket in clients:
+        try:
+            client_socket.send(message.encode("utf-8"))
+        except:
+            print("Ошибка при отправке сообщения")
+
+
+def remove_client(client_socket):
+    if client_socket in clients:
+        clients.remove(client_socket)
+
+
+def start_server():
+    global clients
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(('localhost', 9999))
+    server_socket.listen(5)
+
+    print("Сервер чата запущен.")
+
+    clients = []
     while True:
-        message = input()
-        sock.send(message.encode("utf-8"))
+        client_socket, client_address = server_socket.accept()
+        clients.append(client_socket)
+        client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+        client_thread.start()
 
-def start_chat(host, port):
-    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_sock.bind((host, port))
-    server_sock.listen(1)
-    print(f"Listening on {host}:{port}")
 
-    while True:
-        client_sock, _ = server_sock.accept()
-        threading.Thread(target=receive_messages, args=(client_sock,)).start()
-        threading.Thread(target=send_message, args=(client_sock,)).start()
-
-if __name__ == "__main__":
-    # Replace these with your virtual machine IP addresses and ports
-    vm = ("0.0.0.0", 8000)
-
-    start_chat(*vm)
+start_server()
