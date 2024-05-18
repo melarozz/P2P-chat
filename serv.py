@@ -1,7 +1,6 @@
 import socket
 import threading
 
-
 def handle_client(client_socket, client_address):
     print(f"Подключился клиент: {client_address}")
     while True:
@@ -19,7 +18,6 @@ def handle_client(client_socket, client_address):
             remove_client(client_socket)
             break
 
-
 def broadcast(message):
     for client_socket in clients:
         try:
@@ -27,16 +25,19 @@ def broadcast(message):
         except:
             print("Ошибка при отправке сообщения")
 
+def send_message_to_all():
+    while True:
+        message = input("Введите сообщение для отправки всем клиентам: ")
+        broadcast(message)
 
 def remove_client(client_socket):
     if client_socket in clients:
         clients.remove(client_socket)
 
-
 def start_server():
     global clients
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 9999))
+    server_socket.bind(('10.0.2.15', 8000))
     server_socket.listen(5)
 
     print("Сервер чата запущен.")
@@ -48,5 +49,8 @@ def start_server():
         client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
         client_thread.start()
 
+        # Start a separate thread to send messages to all clients
+        send_thread = threading.Thread(target=send_message_to_all)
+        send_thread.start()
 
 start_server()
