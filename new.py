@@ -27,7 +27,7 @@ def read_stdin_and_write_socket(s):
     while True:
         if bye_flag:
             send_str = input("<<< ")
-            s.sendto(send_str.encode(), (broadcast_ip, port))
+            s.sendto(send_str.encode(), (peer_ip, port))
             if send_str == "bye":
                 print("Chat termination signal sent!!!")
                 bye_flag = 0
@@ -48,26 +48,23 @@ def broadcast_message():
 def connect_to_peer():
     global bye_flag
     bye_flag = 1
-    ch = input("Connect[1] to peer or wait[2] for peer connection. Enter choice:")
+    ch = input("Options:\n1. Connect to a peer\n2. Wait for peer connection\n3. Use broadcast\nEnter choice: ")
 
     if ch == "1":
-        host = input("Enter peer IP:")
-        port = 54321
-        s.connect((host, port))
+        peer_ip = input("Enter peer IP: ")
+        s.connect((peer_ip, port))
         threading.Thread(target=read_socket_and_output, args=(s,)).start()
         threading.Thread(target=read_stdin_and_write_socket, args=(s,)).start()
-        threading.Thread(target=broadcast_message).start()
         
     elif ch == "2":
-        host = ''
-        port = 54321
-        s.bind((host, port))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        s.bind(('', port))
         s.listen(2)
         print("Waiting for connection...")
         c, addr = s.accept()  # Establish connection with client.
         threading.Thread(target=read_socket_and_output, args=(c,)).start()
         threading.Thread(target=read_stdin_and_write_socket, args=(c,)).start()
+
+    elif ch == "3":
         threading.Thread(target=broadcast_message).start()
 
     else:
