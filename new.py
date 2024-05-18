@@ -2,58 +2,63 @@ import socket
 import sys
 import threading
 
-def readSocketAndOutput(s):
-    global byeFlag
+def read_socket_and_output(s):
+    global bye_flag
     print("Enter 'bye' to quit chat")
     while True:
-        if byeFlag:
+        if bye_flag:
             try:
-                str_recv = s.recv(100).decode()
-                print("\r>>> " + str_recv + "\n<<<", end="", flush=True)
+                received_str = s.recv(100).decode()
+                print("\r>>> " + received_str + "\n<<<", end="", flush=True)
             except:
                 print("Connection closed")
                 break
 
-            if str_recv == "bye":
-                byeFlag = 0
+            if received_str == "bye":
+                bye_flag = 0
                 break
         
     print("Remote user disconnected!!!")
     s.close()
-    
-def readSTDINandWriteSocket(s):
-    global byeFlag
+    connect_to_peer()
+
+def read_stdin_and_write_socket(s):
+    global bye_flag
     while True:
-        if byeFlag:
-            str_send = input("<<< ")
-            s.send(str_send.encode())
-            if str_send == "bye":
+        if bye_flag:
+            send_str = input("<<< ")
+            s.send(send_str.encode())
+            if send_str == "bye":
                 print("Chat termination signal sent!!!")
-                byeFlag = 0
+                bye_flag = 0
                 s.close()
+                connect_to_peer()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-byeFlag = 1
+def connect_to_peer():
+    global bye_flag
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    bye_flag = 1
+    ch = input("Connect[1] to peer or wait[2] for peer connection. Enter choice:")
 
-ch = input("Connect[1] to peer or wait[2] for peer connection. Enter choice:")
+    if ch == "1":
+        host = input("Enter peer IP:")
+        port = 54321
+        s.connect((host, port))
+        threading.Thread(target=read_socket_and_output, args=(s,)).start()
+        threading.Thread(target=read_stdin_and_write_socket, args=(s,)).start()
+        
+    elif ch == "2":
+        host = ''
+        port = 54321
+        s.bind((host, port))
+        s.listen(2)
+        print("Waiting for connection...")
+        c, addr = s.accept()  # Establish connection with client.
+        threading.Thread(target=read_socket_and_output, args=(c,)).start()
+        threading.Thread(target=read_stdin_and_write_socket, args=(c,)).start()
 
-if ch == "1":
-    host = input("Enter peer IP:")
-    port = 54321
-    s.connect((host, port))
-    threading.Thread(target=readSocketAndOutput, args=(s,)).start()
-    threading.Thread(target=readSTDINandWriteSocket, args=(s,)).start()
-    
-elif ch == "2":
-    host = ''
-    port = 54321
-    s.bind((host, port))
-    s.listen(2)
-    print("Waiting for connection...")
-    c, addr = s.accept()  # Establish connection with client.
-    threading.Thread(target=readSocketAndOutput, args=(c,)).start()
-    threading.Thread(target=readSTDINandWriteSocket, args=(c,)).start()
+    else:
+        print("Incorrect choice")
+        sys.exit()
 
-else:
-    print("Incorrect choice")
-    sys.exit()
+connect_to_peer()
