@@ -24,14 +24,20 @@ def start_peer(port):
         peer_thread = threading.Thread(target=handle_peer, args=(peer_client_socket, peer_client_address))
         peer_thread.start()
 
-def send_message_to_peer(peer_host, peer_port, message):
+def send_message_to_peer(peer_host, peer_port):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect((peer_host, peer_port))
-        client_socket.send(message.encode("utf-8"))
-        client_socket.close()
+        while True:
+            message = input("Enter message to send (or type 'disconnect' to connect to another peer): ")
+            if message.lower() == 'disconnect':
+                break
+
+            client_socket.send(message.encode("utf-8"))
     except Exception as e:
         print(f"Error sending message to peer {peer_host}:{peer_port}: {e}")
+    finally:
+        client_socket.close()
 
 if __name__ == "__main__":
     # Start peer
@@ -39,8 +45,14 @@ if __name__ == "__main__":
     peer_thread = threading.Thread(target=start_peer, args=(port,))
     peer_thread.start()
 
-    # Connect to another peer
-    peer_host = input("Enter peer's IP address: ")
-    peer_port = int(input("Enter peer's port number: "))
-    message = input("Enter message to send: ")
-    send_message_to_peer(peer_host, peer_port, message)
+    while True:
+        # Connect to another peer
+        peer_host = input("Enter peer's IP address (or type 'exit' to quit): ")
+        if peer_host.lower() == 'exit':
+            break
+
+        peer_port = int(input("Enter peer's port number: "))
+
+        # Start sending messages
+        send_thread = threading.Thread(target=send_message_to_peer, args=(peer_host, peer_port))
+        send_thread.start()
