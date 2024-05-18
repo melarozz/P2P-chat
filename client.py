@@ -60,7 +60,8 @@ if __name__ == "__main__":
             try:
                 client_socket.connect((peer_host, peer_port))
                 send_message_to_peer(client_socket, message)
-                client_socket.close()
+                # Add connected peer socket to the list
+                peer_sockets.append(client_socket)
             except Exception as e:
                 print(f"Error connecting to peer or sending message: {e}")
         elif action == '2':
