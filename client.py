@@ -48,19 +48,23 @@ if __name__ == "__main__":
     peer_thread.start()
 
     while True:
-        action = input("Enter '1' to send a message to all peers, '2' to send a message to a specific peer, or 'exit' to quit: ")
+        action = input("Enter '1' to connect to a peer and send a message, '2' to send a message to all connected peers, or 'exit' to quit: ")
 
         if action == 'exit':
             break
         elif action == '1':
+            peer_host = input("Enter peer's IP address: ")
+            peer_port = int(input("Enter peer's port number: "))
+            message = input("Enter message to send: ")
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                client_socket.connect((peer_host, peer_port))
+                send_message_to_peer(client_socket, message)
+                client_socket.close()
+            except Exception as e:
+                print(f"Error connecting to peer or sending message: {e}")
+        elif action == '2':
             message = input("Enter message to send to all peers: ")
             send_message_to_all(message)
-        elif action == '2':
-            peer_index = int(input("Enter the index of the peer to send a message to: "))
-            message = input("Enter message to send: ")
-            if peer_index < len(peer_sockets):
-                send_message_to_peer(peer_sockets[peer_index], message)
-            else:
-                print("Invalid peer index.")
         else:
             print("Invalid action.")
