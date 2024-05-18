@@ -1,40 +1,29 @@
 import socket
+import threading
 
-def get_env(key, default_val):
-    return os.getenv(key, default_val)
-
-def start_listener(ip):
-    p = bytearray(2048)
-    addr = ('', 8080)  # Listening on all interfaces
-    ser = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    ser.bind(addr)
-    start_sender(ser)
+def receive_messages(sock):
     while True:
-        listen(ser, p)
+        message = sock.recv(1024).decode("utf-8")
+        print(message)
 
-def start_sender(conn):
+def send_message(sock):
     while True:
-        host, message = input_message()
-        if host == "all":
-            host = "255.255.255.255"
-        send_message(host, message, conn)
+        message = input()
+        sock.send(message.encode("utf-8"))
 
-def send_message(addr, message, conn):
-    addr_ = (addr, 8080)
-    conn.sendto(message.encode(), addr_)
+def start_chat(host, port):
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.bind((host, port))
+    server_sock.listen(1)
+    print(f"Listening on {host}:{port}")
 
-def input_message():
-    input_text = input("Message: ")
-    split_input = input_text.split(" ")
-    host, message = split_input[0], " ".join(split_input[1:])
-    return host, message
-
-def listen(ser, p):
-    data, remote = ser.recvfrom(2048)
-    print(f"New message from {remote}: {data.decode()}")
-    print("Message: ")
+    while True:
+        client_sock, _ = server_sock.accept()
+        threading.Thread(target=receive_messages, args=(client_sock,)).start()
+        threading.Thread(target=send_message, args=(client_sock,)).start()
 
 if __name__ == "__main__":
-    host = get_env("HOST", "0.0.0.0")
-    start_listener(host)
-    print(f"Listener started at port 8080 on host {host}")
+    # Replace these with your virtual machine IP addresses and ports
+    vm = ("0.0.0.0", 8000)
+
+    start_chat(*vm)
