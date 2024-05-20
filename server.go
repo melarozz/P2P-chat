@@ -35,8 +35,8 @@ func startSender(conn *net.UDPConn) {
 }
 
 func sendMessage(addr string, message string, conn *net.UDPConn) {
-  addr_, err := net.ResolveUDPAddr("udp", addr+":8080")
-  _, err = conn.WriteTo([]byte(message), addr_)
+  addr_, _ := net.ResolveUDPAddr("udp", addr+":8080")
+  _, _ = conn.WriteTo([]byte(message), addr_)
 }
 
 func inputMessage() (string, string) {
@@ -49,7 +49,7 @@ func inputMessage() (string, string) {
 }
 
 func listen(ser *net.UDPConn, p []byte) {
-  _, remote, err := ser.ReadFromUDP(p)
+  _, remote, _ := ser.ReadFromUDP(p)
   fmt.Printf("New message from %v: %s", remote, p)
   fmt.Printf("Enter message: ")
 }
@@ -60,7 +60,7 @@ func startListen(ip string) {
     Port: 8080,
     IP:   net.ParseIP(ip),
   }
-  ser, err := net.ListenUDP("udp", &addr)
+  ser, _ := net.ListenUDP("udp", &addr)
   go startSender(ser)
   for {
     listen(ser, p)
