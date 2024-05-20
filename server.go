@@ -51,6 +51,9 @@ func inputMessage() (string, string) {
 func listen(ser *net.UDPConn, p []byte) {
   _, remote, _ := ser.ReadFromUDP(p)
   fmt.Printf("New message from %v: %s", remote, p)
+  for i:= range p {
+    p[i]=0 
+  }
   fmt.Printf("Enter message: ")
 }
 
